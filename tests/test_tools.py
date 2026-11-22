@@ -2,6 +2,8 @@
 
 import json
 
+import pytest
+
 from app import tools
 
 
@@ -37,6 +39,16 @@ def test_search_reports_not_found():
 def test_lecture_summary():
     assert "エージェント" in tools.get_lecture_summary(3)
     assert "まだありません" in tools.get_lecture_summary(99)
+
+
+def test_make_quiz_returns_question_and_answer_for_existing_lecture():
+    quiz = json.loads(tools.make_quiz(1))
+    assert quiz["question"] and quiz["answer"]
+
+
+def test_make_quiz_rejects_lecture_with_no_glossary_entries():
+    with pytest.raises(ValueError, match="用意されている回"):
+        tools.make_quiz(99)
 
 
 def test_default_question_of_lecture1_is_answerable_from_glossary():

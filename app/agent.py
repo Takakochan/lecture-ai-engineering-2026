@@ -20,7 +20,7 @@ from pydantic_ai import Agent
 from pydantic_ai.exceptions import ModelHTTPError
 from fastmcp import Client
 from pydantic_ai.mcp import MCPToolset, StdioTransport
-from pydantic_ai.messages import ToolCallPart, ToolReturnPart
+from pydantic_ai.messages import RetryPromptPart, ToolCallPart, ToolReturnPart
 from pydantic_ai.models.google import GoogleModel
 from pydantic_ai.models.test import TestModel
 from pydantic_ai.providers.google import GoogleProvider
@@ -41,8 +41,7 @@ INSTRUCTIONS = """\
 agent = Agent(instructions=INSTRUCTIONS)
 agent.tool_plain(tools.search_glossary)
 agent.tool_plain(tools.get_lecture_summary)
-
-# TODO(第3回 演習): tools.py に make_quiz を作り、ここで登録しよう
+agent.tool_plain(tools.make_quiz)
 
 # 第5回: 使う MCP サーバーの設定ファイル。Claude Desktop や Cursor と同じ "mcpServers" 形式
 MCP_CONFIG = Path(__file__).resolve().parent / "mcp_servers.json"
@@ -106,6 +105,9 @@ def print_trace(result) -> None:
                 print(f"[tool call]   {part.tool_name}({part.args})")
             elif isinstance(part, ToolReturnPart):
                 print(f"[tool return] {part.tool_name} -> {str(part.content)[:120]}…")
+            elif isinstance(part, RetryPromptPart):
+                # ツールが例外を送出すると、MCP越しでもここに来る。モデルは引数を直して再試行できる
+                print(f"[tool error]  {part.tool_name} -> {str(part.content)[:120]}…")
     print(f"[usage] {result.usage}")
 
 
